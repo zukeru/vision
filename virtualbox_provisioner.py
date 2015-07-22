@@ -15,17 +15,17 @@ def execute_build(json_file, config_file):
     def execute_packer_vbox_build(json_file, config_file):
         import packer
 
-        p = packer.Installer('~/packer', '0.6.1_linux_amd64.zip')
-        packer_exec = p.install()
         packerfile = json_file
         exc = []
-        only = ['my_first_image', 'my_second_image']
-        vars = {"variable1": "value1", "variable2": "value2"}
-        vars_file = config_file
+        #only = ['my_first_image', 'my_second_image']
+        #vars = {"variable1": "value1", "variable2": "value2"}
+        #vars_file = config_file
         packer_exec_path = 'packer'
         
-        p = packer.Packer(packerfile, exc=exc, only=only, vars=vars,
-                          vars_file=vars_file, exec_path=packer_exec_path)
+        p = packer.Packer(packerfile, exc=exc,
+                           exec_path=packer_exec_path)
+        #p = packer.Packer(packerfile, exc=exc, only=only, vars=vars,
+        #                  vars_file=vars_file, exec_path=packer_exec_path)
         p.build(parallel=True, debug=False, force=False)
         
     
@@ -35,7 +35,8 @@ def execute_build(json_file, config_file):
     output = execute_packer_vbox_build(json_file, config_file)
     print output
 
-def write_vitualbox(file, file_config):
+def write_vitualbox(file, file_config,directory_file):
+    import json
     file.write('{\n')
     file.write('    "variables": {\n')
     file.write('        "ssh_name": "kappataumu",\n')
@@ -53,7 +54,7 @@ def write_vitualbox(file, file_config):
     file.write('\n ')
     file.write('        "disk_size" : 10000,\n')
     file.write('\n ')
-    file.write('        "iso_url": "http://releases.ubuntu.com/precise/ubuntu-12.04.3-server-amd64.iso",\n')
+    file.write('        "iso_url": "http://releases.ubuntu.com/14.04.2/ubuntu-14.04.2-server-amd64.iso",\n')
     file.write('        "iso_checksum": "2cbe868812a871242cdcdd8f2fd6feb9",\n')
     file.write('        "iso_checksum_type": "md5",\n')
     file.write(' ')
@@ -159,7 +160,16 @@ def write_vitualbox(file, file_config):
     
     file_config.close()
     file.close()
-
+    
+    
+    file = open(directory_file, 'r')
+    lines = file.read()
+    json_conv = json.loads(str(lines))
+    json_output_str = json.dumps(json_conv)
+    file.close()
+    file = open(directory_file, 'w')
+    file.write(json_output_str)
+    file.close()
 
 filename = str(uuid.uuid4())
 mkdir_p(filename)
@@ -170,5 +180,5 @@ directory_file_path = (os.path.dirname(os.path.realpath(__file__)) + '/' + filen
 
 file_config = open(directory_file_path , 'w')
 file = open(directory_file, 'w')
-write_vitualbox(file, file_config)
+write_vitualbox(file, file_config,directory_file)
 execute_build(directory_file, directory_file_path)
