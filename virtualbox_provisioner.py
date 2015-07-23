@@ -19,10 +19,10 @@ def execute_build(json_file, config_file):
 
         packerfile = json_file
         exc = []        
+        #only = ['my_first_image', 'my_second_image']
         packer_exec_path = 'packer'
         print 'Starting Packer Build...'
-        p = packer.Packer(packerfile, exc=exc,
-                           exec_path=packer_exec_path)
+        p = packer.Packer(packerfile,exec_path=packer_exec_path)
 
         try:
             out = p.build(parallel=True, debug=False, force=False)
@@ -36,48 +36,68 @@ def execute_build(json_file, config_file):
     output = execute_packer_vbox_build(json_file, config_file)
     print output
 
-def write_vitualbox(file, file_config,directory_file):
+
+ssh_name = '        "ssh_name": "test",\n'
+ssh_pass = '        "ssh_pass": "test",\n'
+hostname = '        "hostname": "packer-test"\n'
+builder_type = '        "type": "virtualbox-iso",\n'
+guest_os_type = '        "guest_os_type": "Ubuntu_64",\n'
+modifyvm = '            ["modifyvm", "{{.Name}}", "--vram", "32"]\n'
+disk_size = '        "disk_size" : 10000,\n'
+iso_url = '        "iso_url": "http://releases.ubuntu.com/14.04.2/ubuntu-14.04.2-server-amd64.iso",\n'
+iso_checksum = '        "iso_checksum": "83aabd8dcf1e8f469f3c72fff2375195",\n'
+iso_checksum_type = '        "iso_checksum_type": "md5",\n'
+http_directory = '        "http_directory" : "ubuntu_64",\n'
+http_port_min = '        "http_port_min" : 9001,\n'
+http_port_max = '        "http_port_max" : 9001,\n'
+ssh_wait_timeout = '        "ssh_wait_timeout": "20m",\n'
+
+boot_commands = ['            "<esc><esc><enter><wait>",\n',
+                 '            "/install/vmlinuz noapic ",\n',
+                 '            "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",\n',
+                 '            "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",\n',
+                 '            "hostname={{user `hostname`}} ",\n',
+                 '            "fb=false debconf/frontend=noninteractive ",\n',
+                 '            "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",\n',
+                 '            "keyboard-configuration/variant=USA console-setup/ask_detect=false ",\n',
+                 '            "initrd=/install/initrd.gz -- <enter>"\n' ]
+def write_vitualbox(file,file_config,directory_file,ssh_name,ssh_pass,hostname,builder_type,guest_os_type,modifyvm,disk_size,iso_url,iso_checksum,iso_checksum_type,http_directory,http_port_min,http_port_max,ssh_wait_timeout, boot_commands):
     import json
+    
+    print "Building Packer Configs..."
     file.write('{\n')
     file.write('    "variables": {\n')
-    file.write('        "ssh_name": "test",\n')
-    file.write('        "ssh_pass": "test",\n')
-    file.write('        "hostname": "packer-test"\n')
+    file.write(ssh_name)
+    file.write(ssh_pass)
+    file.write(hostname)
     file.write('    },\n')
     file.write('\n ')
     file.write('    "builders": [{\n')
-    file.write('        "type": "virtualbox-iso",\n')
-    file.write('        "guest_os_type": "Ubuntu_64",\n')
+    file.write(builder_type)
+    file.write(guest_os_type)
     file.write('\n ')
     file.write('        "vboxmanage": [\n')
-    file.write('            ["modifyvm", "{{.Name}}", "--vram", "32"]\n')
+    file.write(modifyvm)
     file.write('        ],\n')
     file.write('\n ')
-    file.write('        "disk_size" : 10000,\n')
+    file.write(disk_size)
     file.write('\n ')
-    file.write('        "iso_url": "http://releases.ubuntu.com/14.04.2/ubuntu-14.04.2-server-amd64.iso",\n')
-    file.write('        "iso_checksum": "83aabd8dcf1e8f469f3c72fff2375195",\n')
-    file.write('        "iso_checksum_type": "md5",\n')
+    file.write(iso_url)
+    file.write(iso_checksum)
+    file.write(iso_checksum_type)
     file.write(' ')
-    file.write('        "http_directory" : "ubuntu_64",\n')
-    file.write('        "http_port_min" : 9001,\n')
-    file.write('        "http_port_max" : 9001,\n')
+    file.write(http_directory)
+    file.write(http_port_min)
+    file.write(http_port_max)
     file.write('        "ssh_username": "{{user `ssh_name`}}",\n')
     file.write('        "ssh_password": "{{user `ssh_pass`}}",\n')
-    file.write('        "ssh_wait_timeout": "20m",\n')
+    file.write(ssh_wait_timeout)
     file.write(' ')
     file.write('        "shutdown_command": "echo {{user `ssh_pass`}} | sudo -S shutdown -P now",\n')
     file.write('\n ')
     file.write('        "boot_command" : [\n')
-    file.write('            "<esc><esc><enter><wait>",\n')
-    file.write('            "/install/vmlinuz noapic ",\n')
-    file.write('            "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",\n')
-    file.write('            "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",\n')
-    file.write('            "hostname={{user `hostname`}} ",\n')
-    file.write('            "fb=false debconf/frontend=noninteractive ",\n')
-    file.write('            "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",\n')
-    file.write('            "keyboard-configuration/variant=USA console-setup/ask_detect=false ",\n')
-    file.write('            "initrd=/install/initrd.gz -- <enter>"\n')
+    for command in boot_commands:
+        file.write(command)
     file.write('        ]\n')
     file.write('    }]\n')
     file.write('}\n')
@@ -181,7 +201,7 @@ directory_file_path = (os.path.dirname(os.path.realpath(__file__)) + '/' + filen
 
 file_config = open(directory_file_path , 'w')
 file = open(directory_file, 'w')
-write_vitualbox(file, file_config,directory_file)
+write_vitualbox(file,file_config,directory_file,ssh_name,ssh_pass,hostname,builder_type,guest_os_type,modifyvm,disk_size,iso_url,iso_checksum,iso_checksum_type,http_directory,http_port_min,http_port_max,ssh_wait_timeout, boot_commands)
 execute_build(directory_file, directory_file_path)
 
 
