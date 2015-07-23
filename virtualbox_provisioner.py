@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import uuid
 import os, errno
 import subprocess
@@ -16,18 +18,17 @@ def execute_build(json_file, config_file):
         import packer
 
         packerfile = json_file
-        exc = []
-        #only = ['my_first_image', 'my_second_image']
-        #vars = {"variable1": "value1", "variable2": "value2"}
-        #vars_file = config_file
+        exc = []        
         packer_exec_path = 'packer'
-        
+        print 'Starting Packer Build...'
         p = packer.Packer(packerfile, exc=exc,
                            exec_path=packer_exec_path)
-        #p = packer.Packer(packerfile, exc=exc, only=only, vars=vars,
-        #                  vars_file=vars_file, exec_path=packer_exec_path)
-        p.build(parallel=True, debug=False, force=False)
-        
+
+        try:
+            out = p.build(parallel=True, debug=False, force=False)
+            print out.stdout    
+        except Exception as e:
+            print e.stdout    
     
     output = execute_packer_vbox_build(json_file, config_file)
     print output
@@ -39,8 +40,8 @@ def write_vitualbox(file, file_config,directory_file):
     import json
     file.write('{\n')
     file.write('    "variables": {\n')
-    file.write('        "ssh_name": "kappataumu",\n')
-    file.write('        "ssh_pass": "kappataumu",\n')
+    file.write('        "ssh_name": "test",\n')
+    file.write('        "ssh_pass": "test",\n')
     file.write('        "hostname": "packer-test"\n')
     file.write('    },\n')
     file.write('\n ')
@@ -55,7 +56,7 @@ def write_vitualbox(file, file_config,directory_file):
     file.write('        "disk_size" : 10000,\n')
     file.write('\n ')
     file.write('        "iso_url": "http://releases.ubuntu.com/14.04.2/ubuntu-14.04.2-server-amd64.iso",\n')
-    file.write('        "iso_checksum": "2cbe868812a871242cdcdd8f2fd6feb9",\n')
+    file.write('        "iso_checksum": "83aabd8dcf1e8f469f3c72fff2375195",\n')
     file.write('        "iso_checksum_type": "md5",\n')
     file.write(' ')
     file.write('        "http_directory" : "ubuntu_64",\n')
@@ -161,7 +162,7 @@ def write_vitualbox(file, file_config,directory_file):
     file_config.close()
     file.close()
     
-    
+    '''
     file = open(directory_file, 'r')
     lines = file.read()
     json_conv = json.loads(str(lines))
@@ -170,7 +171,7 @@ def write_vitualbox(file, file_config,directory_file):
     file = open(directory_file, 'w')
     file.write(json_output_str)
     file.close()
-
+    '''
 filename = str(uuid.uuid4())
 mkdir_p(filename)
 
@@ -182,3 +183,11 @@ file_config = open(directory_file_path , 'w')
 file = open(directory_file, 'w')
 write_vitualbox(file, file_config,directory_file)
 execute_build(directory_file, directory_file_path)
+
+
+
+#only = ['my_first_image', 'my_second_image']
+#vars = {"variable1": "value1", "variable2": "value2"}
+#vars_file = config_file
+#p = packer.Packer(packerfile, exc=exc, only=only, vars=vars,
+#vars_file=vars_file, exec_path=packer_exec_path)
